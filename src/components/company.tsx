@@ -71,14 +71,13 @@ const CompanySignUp: React.FC = () => {
     } else {
       setErrors({});
       setSuccessMessage("Signup successful!");
+      
       setTimeout(async()=>{
-      await axiosInstance.post('/employer/signup', formData)
-      navigate('/dashboard');
+      await axiosInstance.post('/employer/signup', {...formData,userType:'employer'})
+      navigate('/signin');
     },1000)
       console.log("Signup Data:", formData);
       // Simulate API call or navigate
-      
-      
     }
   };
 

@@ -1,20 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../api/axiosInstance";
 
 interface Question {
   question: string;
   options: string[];
 }
 
-interface AssessmentProps {
-  questions: Question[];
-  onSubmit: (answers: string[]) => void;
-}
-
-const PersonalityAssessment: React.FC<AssessmentProps> = ({ questions, onSubmit }) => {
+const PersonalityAssessment: React.FC = () => {
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<string[]>(Array(questions.length).fill(""));
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // 🧭 Fetch quiz questions on component mount
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const res = await axiosInstance.get("/quiz"); // ✅ Fetch from backend
+        setQuestions(res.data);
+        setAnswers(Array(res.data.length).fill(""));
+      } catch (error) {
+        console.error("Failed to load quiz questions:", error);
+      }
+    };
+    fetchQuestions();
+  }, []);
+
   const handleOptionChange = (option: string) => {
     const updatedAnswers = [...answers];
     updatedAnswers[currentQuestion] = option;
@@ -33,16 +46,49 @@ const PersonalityAssessment: React.FC<AssessmentProps> = ({ questions, onSubmit 
     setCurrentQuestion((prev) => Math.max(prev - 1, 0));
   };
 
-  const handleSubmit = () => {
-    if (answers.every((ans) => ans !== "")) {
-      onSubmit(answers);
-      setTimeout(()=>{
-      navigate('/dashboard');
-    },1000)}
-    else {
+  // 🚀 Submit Quiz
+  const handleSubmit = async () => {
+    if (!answers.every((ans) => ans !== "")) {
       alert("Please answer all the questions before submitting.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // ✅ Get JWT token from local storage
+      const token = localStorage.getItem("token");
+
+      // ✅ Send answers to backend
+      const res = await axiosInstance.post(
+        "/api/submit",
+        { answers },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert("Assessment submitted successfully!");
+
+      console.log("Server Response:", res.data);
+
+      // Optional: Navigate to dashboard or result page
+      setTimeout(() => navigate("/dashboard/recommendations"), 1000);
+    } catch (error: any) {
+      console.error("Submission failed:", error);
+      alert(
+        error.response?.data?.error || "Something went wrong. Try again later."
+      );
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (questions.length === 0) {
+    return <p className="text-center mt-5">Loading quiz questions...</p>;
+  }
 
   const progressPercentage = ((currentQuestion + 1) / questions.length) * 100;
 
@@ -50,43 +96,35 @@ const PersonalityAssessment: React.FC<AssessmentProps> = ({ questions, onSubmit 
     <div className="container py-5">
       <div className="row justify-content-center">
         <div className="col-lg-8 col-md-10">
-          {/* Header */}
           <div className="text-center mb-4">
-            <h2 className="fw-bold mb-2">Personality Assessment</h2>
-            <p className="text-muted">Help us find the perfect job matches for you</p>
+            <h2 className="fw-bold mb-2">Skill Assessment</h2>
+            <p className="text-muted">
+              Answer honestly — this helps us match you with the right jobs!
+            </p>
           </div>
 
-          {/* Card Container */}
           <div className="card shadow border-0">
             <div className="card-body p-4 p-md-5">
-              {/* Progress Indicator */}
               <div className="mb-4">
                 <div className="d-flex justify-content-center mb-3">
                   <span className="badge bg-info px-4 py-2 fs-6">
                     Question {currentQuestion + 1} of {questions.length}
                   </span>
                 </div>
-                
-                {/* Progress Bar */}
+
                 <div className="progress" style={{ height: "8px" }}>
                   <div
                     className="progress-bar bg-info"
-                    role="progressbar"
                     style={{ width: `${progressPercentage}%` }}
-                    aria-valuenow={progressPercentage}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
                   ></div>
                 </div>
               </div>
 
-              {/* Question */}
               <div className="mb-4">
                 <h5 className="fw-semibold mb-4">
                   {questions[currentQuestion].question}
                 </h5>
 
-                {/* Answer Options */}
                 <div className="d-grid gap-3">
                   {questions[currentQuestion].options.map((option) => (
                     <div
@@ -96,33 +134,22 @@ const PersonalityAssessment: React.FC<AssessmentProps> = ({ questions, onSubmit 
                           ? "border-info border-2 bg-info bg-opacity-10"
                           : "border-secondary"
                       }`}
-                      style={{ cursor: "pointer", transition: "all 0.2s" }}
+                      style={{ cursor: "pointer" }}
                       onClick={() => handleOptionChange(option)}
                     >
-                      <div className="form-check m-0">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name={`question-${currentQuestion}`}
-                          id={`${currentQuestion}-${option}`}
-                          value={option}
-                          checked={answers[currentQuestion] === option}
-                          onChange={() => handleOptionChange(option)}
-                        />
-                        <label
-                          className="form-check-label ms-2 w-100"
-                          htmlFor={`${currentQuestion}-${option}`}
-                          style={{ cursor: "pointer" }}
-                        >
-                          {option}
-                        </label>
-                      </div>
+                      <input
+                        type="radio"
+                        name={`q-${currentQuestion}`}
+                        value={option}
+                        checked={answers[currentQuestion] === option}
+                        onChange={() => handleOptionChange(option)}
+                      />
+                      <label className="ms-2">{option}</label>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Navigation Buttons */}
               <div className="d-flex justify-content-between mt-4">
                 <button
                   className="btn btn-outline-secondary px-4"
@@ -133,18 +160,19 @@ const PersonalityAssessment: React.FC<AssessmentProps> = ({ questions, onSubmit 
                 </button>
 
                 {currentQuestion < questions.length - 1 ? (
-                  <button 
-                    className="btn btn-info text-white px-4" 
+                  <button
+                    className="btn btn-info text-white px-4"
                     onClick={handleNext}
                   >
                     Next
                   </button>
                 ) : (
-                  <button 
-                    className="btn btn-info text-white px-4" 
+                  <button
+                    className="btn btn-info text-white px-4"
                     onClick={handleSubmit}
+                    disabled={loading}
                   >
-                    Submit
+                    {loading ? "Submitting..." : "Submit"}
                   </button>
                 )}
               </div>

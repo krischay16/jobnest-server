@@ -22,18 +22,18 @@ const Login: React.FC = () => {
     setError("");
 
     try {
-      // POST to your backend login API
+    
       const response = await axios.post('http://localhost:3000/login', { email, password });
-
-      // JWT token from backend
-      const token = response.data;
-
+    
+      const {token,user}= response.data;
+      
       // Store JWT in localStorage
       localStorage.setItem("token", token);
-      // localStorage.setItem("userType", user.userType); // For role-based UI
-      localStorage.setItem("userType", "jobseeker");
-      // Redirect (use window.location.href or navigate, as needed)
-      window.location.href = "/dashboard"; // Or use navigate("/dashboard") if using react-router v6
+      localStorage.setItem("userType",user.userType);
+      localStorage.setItem("username", user.email);
+      localStorage.setItem("id",user._id);
+
+      window.location.href = "/dashboard/recommendations"; 
     } catch (err: any) {
       setError(
         err.response?.data?.message || "Login failed. Please check your credentials."
@@ -46,7 +46,6 @@ const Login: React.FC = () => {
       className="container-fluid d-flex align-items-start flex-column"
       style={{ minHeight: "100vh", background: "#f5f6fa" }}
     >
-      {/* ... same as before ... */}
       <div className="flex-grow-1 d-flex justify-content-center align-items-center w-100" style={{ minHeight: 'calc(100vh - 62px)' }}>
         <div className="shadow rounded bg-white p-4" style={{
           minWidth: 350,
@@ -64,7 +63,7 @@ const Login: React.FC = () => {
             <div className="alert alert-danger py-2 text-center">{error}</div>
           )}
           <form onSubmit={handleSubmit} autoComplete="off" noValidate>
-            {/* ... inputs ... */}
+        
             <div className="mb-3 text-start">
               <label htmlFor="email" className="form-label fw-semibold">
                 Email Address

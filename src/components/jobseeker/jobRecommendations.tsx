@@ -1,7 +1,10 @@
 // ...existing code...
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import axiosInstance from '../../api/axiosInstance';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import axiosInstance from "../../api/axiosInstance";
+import { useNavigate } from "react-router-dom";
+import { FaMapMarkerAlt, FaBriefcase, FaDollarSign, FaCheck } from "react-icons/fa";
+
 interface Job {
   id: string;
   title: string;
@@ -16,10 +19,10 @@ interface Job {
 
 const JobRecommendations: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const Navigate=useNavigate()
   useEffect(() => {
     fetchJobs();
   }, []);
@@ -28,14 +31,15 @@ const JobRecommendations: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axiosInstance.get<Job[]>('/api/job/')
-      // Ensure applied flag exists
-      const data = (response.data || []).map(j => ({ ...j, applied: !!j.applied }));
+      const response = await axiosInstance.get<Job[]>("/api/jobs/");
+      const data = (response.data || []).map((j) => ({
+        ...j,
+        applied: !!j.applied,
+      }));
       setJobs(data);
     } catch (err) {
-      console.error('Error fetching jobs:', err);
-      setError('Failed to load job recommendations.');
+      console.error("Error fetching jobs:", err);
+      setError("Failed to load job recommendations.");
     } finally {
       setLoading(false);
     }
@@ -43,90 +47,156 @@ const JobRecommendations: React.FC = () => {
 
   const handleApply = async (jobId: string) => {
     try {
-      const token = localStorage.getItem('token');
-      // optimistic UI update
-      setJobs(prev => prev.map(j => (j.id === jobId ? { ...j, applied: true } : j)));
-      await axios.post(
-        `/api/jobs/${jobId}/apply`,
-        {},
-        { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+      const token = localStorage.getItem("token");
+      setJobs((prev) =>
+        prev.map((j) => (j.id === jobId ? { ...j, applied: true } : j))
       );
-      // Optionally refetch or rely on optimistic update
+      console.log("Applying to job ID:", jobId); // Debug
+      Navigate(`/apply/${jobId}`)
+      
     } catch (err) {
-      console.error('Apply failed:', err);
-      // revert optimistic update on failure
-      setJobs(prev => prev.map(j => (j.id === jobId ? { ...j, applied: false } : j)));
-      setError('Failed to apply to the job. Please try again.');
+      console.error("Apply failed:", err);
+      setJobs((prev) =>
+        prev.map((j) => (j.id === jobId ? { ...j, applied: false } : j))
+      );
+      setError("Failed to apply to the job. Please try again.");
     }
   };
 
   const filteredJobs = jobs.filter(
-    j =>
+    (j) =>
       j.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       j.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      j.skills.join(' ').toLowerCase().includes(searchQuery.toLowerCase())
+      j.skills.join(" ").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="container-fluid p-4">
+    <div className="container-fluid p-4 bg-light min-vh-100">
+      {/* Header Section */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-0">Job Recommendations</h2>
-        <div className="input-group" style={{ width: 320 }}>
-          <span className="input-group-text bg-white">
-            <i className="bi bi-search" />
+        <h3 className="fw-bold text-primary mb-0">
+          Recommended Jobs For You
+        </h3>
+        <div className="input-group shadow-sm" style={{ width: 340 }}>
+          <span className="input-group-text bg-white border-end-0">
+            <i className="bi bi-search text-muted" />
           </span>
           <input
             type="text"
-            className="form-control"
-            placeholder="Search jobs, companies or skills..."
+            className="form-control border-start-0"
+            placeholder="Search by title, company or skills..."
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            aria-label="Search jobs"
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
 
-      {loading && <div className="text-center py-4">Loading jobs...</div>}
+      {/* Loading and Errors */}
+      {loading && <div className="text-center py-4 fw-semibold">Loading jobs...</div>}
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {!loading && filteredJobs.length === 0 && <div>No matching jobs found.</div>}
+      {!loading && filteredJobs.length === 0 && (
+        <div className="text-center text-muted mt-5">
+          <i className="bi bi-briefcase fs-1 mb-2 d-block"></i>
+          <p>No matching jobs found.</p>
+        </div>
+      )}
 
-      <div className="row g-3">
-        {filteredJobs.map(job => (
-          <div key={job.id} className="col-md-6">
-            <div className="card h-100 shadow-sm">
+      {/* Job Cards */}
+      <div className="row g-4">
+        {filteredJobs.map((job) => (
+          <div key={job.id} className="col-lg-4 col-md-6">
+            <div
+              className="card border-0 shadow-sm h-100 job-card"
+              style={{
+                transition: "transform 0.2s, box-shadow 0.2s",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.transform = "translateY(-5px)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.transform = "translateY(0)")
+              }
+            >
               <div className="card-body d-flex flex-column">
-                <div className="mb-2 d-flex justify-content-between align-items-start">
+                {/* Header */}
+                <div className="d-flex justify-content-between align-items-start mb-3">
                   <div>
-                    <h5 className="card-title mb-1">{job.title}</h5>
-                    <p className="text-muted mb-0">{job.company}{job.location ? ` • ${job.location}` : ''}</p>
+                    <h5 className="fw-semibold mb-1 text-dark">{job.title}</h5>
+                    <p className="text-muted mb-0">{job.company}</p>
                   </div>
-                  <div className="text-end">
-                    {job.salaryRange && <div className="text-success fw-bold">{job.salaryRange}</div>}
-                    {job.type && <small className="badge bg-secondary">{job.type}</small>}
-                  </div>
+                  {job.type && (
+                    <span className="badge bg-primary-subtle text-primary">
+                      <FaBriefcase className="me-1" />
+                      {job.type}
+                    </span>
+                  )}
                 </div>
 
-                <p className="card-text mb-2" style={{ whiteSpace: 'pre-wrap' }}>
+                {/* Job Meta */}
+                <ul className="list-unstyled small text-muted mb-3">
+                  {job.location && (
+                    <li className="mb-1">
+                      <FaMapMarkerAlt className="me-2 text-danger" />
+                      {job.location}
+                    </li>
+                  )}
+                  {job.salaryRange && (
+                    <li>
+                      <FaDollarSign className="me-2 text-success" />
+                      {job.salaryRange}
+                    </li>
+                  )}
+                </ul>
+
+                {/* Description */}
+                <p
+                  className="card-text text-secondary mb-3"
+                  style={{
+                    minHeight: "60px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {job.description}
                 </p>
 
+                {/* Skills */}
                 <div className="mb-3">
-                  {job.skills.map(skill => (
-                    <span key={skill} className="badge bg-light text-dark me-2 mb-2" style={{ fontSize: 12 }}>
+                  {job.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="badge bg-light text-dark border me-2 mb-2"
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 500,
+                        borderRadius: "20px",
+                        padding: "5px 10px",
+                      }}
+                    >
                       {skill}
                     </span>
                   ))}
                 </div>
 
+                {/* Footer */}
                 <div className="mt-auto d-flex justify-content-between align-items-center">
                   <small className="text-muted">Job ID: {job.id}</small>
                   <button
-                    className={`btn btn-sm ${job.applied ? 'btn-success' : 'btn-primary'}`}
+                    className={`btn btn-sm ${
+                      job.applied ? "btn-success" : "btn-primary"
+                    }`}
                     onClick={() => !job.applied && handleApply(job.id)}
                     disabled={job.applied}
+                    style={{ minWidth: "90px" }}
                   >
-                    {job.applied ? 'Applied' : 'Apply'}
+                    {job.applied ? (
+                      <>
+                        <FaCheck className="me-1" /> Applied
+                      </>
+                    ) : (
+                      "Apply"
+                    )}
                   </button>
                 </div>
               </div>
