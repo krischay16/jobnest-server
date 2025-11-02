@@ -1,27 +1,31 @@
 import React from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation , useNavigate} from "react-router-dom";
 
 const Dashboard: React.FC = () => {
   const location = useLocation();
-
+  const navigate=useNavigate()
   // Define items per user role
   const jobSeekerNav = [
     { path: "/dashboard/recommendations", label: "Job Recommendations", icon: "bi-briefcase" },
     { path: "/dashboard/applications", label: "My Applications", icon: "bi-file-text" },
     { path: "/dashboard/chat", label: "Chat", icon: "bi-people" },
-    { path: "/dashboard/profile", label: "Profile", icon: "bi-person" },
+    { path: "/dashboard/cprofile", label: "Profile", icon: "bi-person" },
   ];
 
   const employerNav = [
-    { path: "/dashboard/jobs", label: "Posted Jobs", icon: "bi-list-task" },
+    { path: "/dashboard/posted-jobs", label: "Posted Jobs", icon: "bi-list-task" },
     { path: "/dashboard/post-a-job", label: "Post a Job", icon: "bi-plus-circle" },
-    { path: "/dashboard/applications", label: "Applications", icon: "bi-inbox" },
+    { path: "/dashboard/applicants", label: "Your Applicants", icon: "bi-inbox" },
     { path: "/dashboard/chat", label: "Chat", icon: "bi-people" },
-    { path: "/dashboard/profile", label: "Company Profile", icon: "bi-building" },
+    { path: "/dashboard/eprofile", label: "Company Profile", icon: "bi-building" },
   ];
 
   const userType = localStorage.getItem("userType");
   const navItems = userType === "jobseeker" ? jobSeekerNav : employerNav;
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/signin');
+  }
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -73,16 +77,17 @@ const Dashboard: React.FC = () => {
           ))}
         </nav>
 
-        {/* Logout */}
-        <div className="p-3 border-top">
-          <Link
-            to="/logout"
-            className="nav-link text-danger d-flex align-items-center justify-content-center fw-semibold py-2"
-          >
-            <i className="bi bi-box-arrow-right me-2 fs-5"></i> Logout
-          </Link>
-        </div>
-      </div>
+<div className="p-3 border-top">
+  <div
+    onClick={handleLogout}
+    className="nav-link text-danger d-flex align-items-center justify-content-center fw-semibold py-2"
+    style={{ cursor: 'pointer' }}
+  >
+    <i className="bi bi-box-arrow-right me-2 fs-5"></i> Logout
+  </div>
+</div>
+</div>
+
 
       {/* Main Content */}
       <div

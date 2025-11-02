@@ -1,17 +1,21 @@
-// ...existing code...
+// JobRecommendations.tsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import axiosInstance from "../../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
-import { FaMapMarkerAlt, FaBriefcase, FaDollarSign, FaCheck } from "react-icons/fa";
+import {
+  FaMapMarkerAlt,
+  FaBriefcase,
+  FaDollarSign,
+  FaCheck,
+} from "react-icons/fa";
 
 interface Job {
   id: string;
-  title: string;
-  company: string;
+  title?: string;
+  company?: string;
   location?: string;
-  description: string;
-  skills: string[];
+  description?: string;
+  skills?: string[];
   salaryRange?: string;
   type?: string;
   applied?: boolean;
@@ -22,7 +26,8 @@ const JobRecommendations: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const Navigate=useNavigate()
+  const Navigate = useNavigate();
+
   useEffect(() => {
     fetchJobs();
   }, []);
@@ -47,13 +52,11 @@ const JobRecommendations: React.FC = () => {
 
   const handleApply = async (jobId: string) => {
     try {
-      const token = localStorage.getItem("token");
       setJobs((prev) =>
         prev.map((j) => (j.id === jobId ? { ...j, applied: true } : j))
       );
-      console.log("Applying to job ID:", jobId); // Debug
-      Navigate(`/apply/${jobId}`)
-      
+      console.log("Applying to job ID:", jobId);
+      Navigate(`/apply/${jobId}`);
     } catch (err) {
       console.error("Apply failed:", err);
       setJobs((prev) =>
@@ -63,20 +66,24 @@ const JobRecommendations: React.FC = () => {
     }
   };
 
-  const filteredJobs = jobs.filter(
-    (j) =>
-      j.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      j.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      j.skills.join(" ").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // ✅ Fix: safe filter using optional chaining and default values
+  const filteredJobs = jobs.filter((j) => {
+    const title = j.title?.toLowerCase() || "";
+    const company = j.company?.toLowerCase() || "";
+    const skills = Array.isArray(j.skills)
+      ? j.skills.join(" ").toLowerCase()
+      : "";
+    const query = searchQuery.toLowerCase();
+    return (
+      title.includes(query) || company.includes(query) || skills.includes(query)
+    );
+  });
 
   return (
     <div className="container-fluid p-4 bg-light min-vh-100">
       {/* Header Section */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3 className="fw-bold text-primary mb-0">
-          Recommended Jobs For You
-        </h3>
+        <h3 className="fw-bold text-primary mb-0">Recommended Jobs For You</h3>
         <div className="input-group shadow-sm" style={{ width: 340 }}>
           <span className="input-group-text bg-white border-end-0">
             <i className="bi bi-search text-muted" />
@@ -92,7 +99,9 @@ const JobRecommendations: React.FC = () => {
       </div>
 
       {/* Loading and Errors */}
-      {loading && <div className="text-center py-4 fw-semibold">Loading jobs...</div>}
+      {loading && (
+        <div className="text-center py-4 fw-semibold">Loading jobs...</div>
+      )}
       {error && <div className="alert alert-danger">{error}</div>}
 
       {!loading && filteredJobs.length === 0 && (
@@ -122,8 +131,12 @@ const JobRecommendations: React.FC = () => {
                 {/* Header */}
                 <div className="d-flex justify-content-between align-items-start mb-3">
                   <div>
-                    <h5 className="fw-semibold mb-1 text-dark">{job.title}</h5>
-                    <p className="text-muted mb-0">{job.company}</p>
+                    <h5 className="fw-semibold mb-1 text-dark">
+                      {job.title || "Untitled Job"}
+                    </h5>
+                    <p className="text-muted mb-0">
+                      {job.company || "Unknown Company"}
+                    </p>
                   </div>
                   {job.type && (
                     <span className="badge bg-primary-subtle text-primary">
@@ -158,25 +171,29 @@ const JobRecommendations: React.FC = () => {
                     textOverflow: "ellipsis",
                   }}
                 >
-                  {job.description}
+                  {job.description || "No description provided."}
                 </p>
 
                 {/* Skills */}
                 <div className="mb-3">
-                  {job.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="badge bg-light text-dark border me-2 mb-2"
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 500,
-                        borderRadius: "20px",
-                        padding: "5px 10px",
-                      }}
-                    >
-                      {skill}
-                    </span>
-                  ))}
+                  {Array.isArray(job.skills) && job.skills.length > 0 ? (
+                    job.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="badge bg-light text-dark border me-2 mb-2"
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 500,
+                          borderRadius: "20px",
+                          padding: "5px 10px",
+                        }}
+                      >
+                        {skill}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-muted small">No skills listed</span>
+                  )}
                 </div>
 
                 {/* Footer */}

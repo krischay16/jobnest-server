@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axiosInstance from "../../api/axiosInstance";
 
@@ -15,6 +15,7 @@ interface Job {
   description: string;
   experience: number;
   skills: string[];
+  employer?: string;
 }
 
 const JobDetails: React.FC = () => {
@@ -67,9 +68,10 @@ const JobDetails: React.FC = () => {
     };
   });
 
-  // ✅ Eligibility check
   const skillsEligible = matchedSkills.every((s) => s.matched);
-  const experienceEligible = userExperience >= job.experience;
+
+  const experienceEligible = userExperience>= job.experience;
+  console.log(userExperience, job.experience, experienceEligible);
   const eligible = skillsEligible && experienceEligible;
 
   const handleApply = async() => {
@@ -78,6 +80,7 @@ const JobDetails: React.FC = () => {
       await axiosInstance.post('/api/application/apply', {
         job: job._id,
         user: localStorage.getItem('id'),
+        employer:job.employer,
         status: 'Applied'
       });
     alert("✅ Application submitted successfully!");

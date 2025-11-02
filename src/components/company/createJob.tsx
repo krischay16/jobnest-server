@@ -8,11 +8,10 @@ const skillsList = ['JavaScript', 'TypeScript', 'React', 'Node.js', 'Python', 'J
 interface JobData {
   title: string;
   company: string;
-  jobtitle: string;
-  salary: string;
+  salaryRange: string;
   skills: string[];
   description: string;
-  preference: string;
+  type: string;
   experience: string;
   location: string;
 }
@@ -21,11 +20,10 @@ const PostJob: React.FC = () => {
   const [formData, setFormData] = useState<JobData>({
     title: '',
     company: '',
-    jobtitle: '',
-    salary: '',
+    salaryRange: '',
     skills: [],
     description: '',
-    preference: '',
+    type: '',
     experience: '',
     location: ''
   });
@@ -67,11 +65,10 @@ const PostJob: React.FC = () => {
       setFormData({
         title: '',
         company: '',
-        jobtitle: '',
-        salary: '',
+        salaryRange: '',
         skills: [],
         description: '',
-        preference: '',
+        type: '',
         experience: '',
         location: ''
       });
@@ -84,7 +81,7 @@ const PostJob: React.FC = () => {
   };
 
   return (
-    <div className="container py-4" style={{ maxWidth: '800px' }}>
+    <div className="container py-4 bg-white border" style={{ maxWidth: '800px' }}>
       <h3 className="mb-4">Post a Job</h3>
 
       <form onSubmit={handleSubmit}>
@@ -125,13 +122,13 @@ const PostJob: React.FC = () => {
               name="jobtitle"
               className="form-control"
               placeholder="e.g., Frontend Developer"
-              value={formData.jobtitle}
+              value={formData.title}
               onChange={handleChange}
               required
             />
           </div>
 
-          {/* Location & Salary */}
+          {/* Location & salaryRange */}
           <div className="col-md-6">
             <label className="form-label">Location *</label>
             <input
@@ -145,13 +142,13 @@ const PostJob: React.FC = () => {
             />
           </div>
           <div className="col-md-6">
-            <label className="form-label">Salary *</label>
+            <label className="form-label">salaryRange *</label>
             <input
               type="text"
-              name="salary"
+              name="salaryRange"
               className="form-control"
               placeholder="e.g., ₹8-12 LPA"
-              value={formData.salary}
+              value={formData.salaryRange}
               onChange={handleChange}
               required
             />
@@ -161,9 +158,9 @@ const PostJob: React.FC = () => {
           <div className="col-md-6">
             <label className="form-label">Job Type *</label>
             <select
-              name="preference"
+              name="type"
               className="form-select"
-              value={formData.preference}
+              value={formData.type}
               onChange={handleChange}
               required
             >

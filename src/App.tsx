@@ -16,6 +16,10 @@ import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-route
 import JobRecommendations from './components/jobseeker/jobRecommendations';
 import Chat from './components/chat';
 import Createjob from './components/company/createJob';
+import PostedJobs from './components/company/postedJobs';
+import CProfile from './components/company/profile';
+import Home from './components/home';
+
 // Component-level AppWrapper to use navigation inside props
 function AppWrapper() {
   const navigate = useNavigate();
@@ -31,11 +35,15 @@ function AppWrapper() {
        <Route path="/dashboard" element={<Dashboard/>}>
           <Route path="recommendations" element={<JobRecommendations />}/>
           <Route path="applications" element={<MyApplications />} />
-          <Route path="profile" element={<Profile />} />
+          <Route path="cprofile" element={<Profile />} />
+          <Route path="eprofile" element={<CProfile/>} />
           <Route path="chat" element={<Chat/>}/>
           <Route path='post-a-job' element={<Createjob/>}/>
+          <Route path='posted-jobs' element={<PostedJobs/>}/>
+          <Route path='applicants' element={<Applications/>}/>
         </Route>
        <Route path="apply/:id" element={<Apply/>}/>
+       <Route path="/home" element={<Home/>}/>
         <Route
           path="/assessment"
           element={
